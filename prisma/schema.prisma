@@ -13,10 +13,88 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
+model Usuario {
   id        Int      @id @default(autoincrement())
-  name      String
+  nome      String
   email     String   @unique
-  password  String
+  senha     String
+  telefone  String?
+  endereco  String?
+  tipo      String   @default("COMPRADOR") // COMPRADOR ou VENDEDOR
   createdAt DateTime @default(now())
+  
+  // Relacionamento 1-1 com Loja (apenas se for vendedor)
+  loja      Loja?
+  
+  // Relacionamento 1-N com Pedidos (como comprador)
+  pedidos   Pedido[]
+}
+
+model Loja {
+  id          Int      @id @default(autoincrement())
+  nome        String
+  descricao   String?
+  categoria   String   // Ex: "Eletrônicos", "Roupas", "Casa e Jardim"
+  endereco    String
+  telefone    String?
+  ativa       Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  
+  // Relacionamento 1-1 com Usuario (vendedor)
+  vendedorId  Int      @unique
+  vendedor    Usuario  @relation(fields: [vendedorId], references: [id], onDelete: Cascade)
+  
+  // Relacionamento 1-N com Produto (uma loja tem muitos produtos)
+  produtos    Produto[]
+}
+
+model Produto {
+  id          Int      @id @default(autoincrement())
+  nome        String
+  descricao   String?
+  preco       Decimal  @db.Decimal(10, 2)
+  categoria   String
+  estoque     Int      @default(0)
+  ativo       Boolean  @default(true)
+  imagem      String?  // URL da imagem do produto
+  peso        Decimal? @db.Decimal(5, 2) // Para cálculo de frete
+  createdAt   DateTime @default(now())
+  
+  // Relacionamento N-1 com Loja (muitos produtos pertencem a uma loja)
+  lojaId      Int
+  loja        Loja     @relation(fields: [lojaId], references: [id], onDelete: Cascade)
+  
+  // Relacionamento 1-N com ItensPedido
+  itensPedido ItensPedido[]
+}
+
+model Pedido {
+  id          Int      @id @default(autoincrement())
+  total       Decimal  @db.Decimal(10, 2)
+  status      String   @default("PENDENTE") // PENDENTE, CONFIRMADO, ENVIADO, ENTREGUE, CANCELADO
+  observacoes String?
+  createdAt   DateTime @default(now())
+  
+  // Relacionamento N-1 com Usuario (comprador)
+  compradorId Int
+  comprador   Usuario  @relation(fields: [compradorId], references: [id])
+  
+  // Relacionamento 1-N com ItensPedido
+  itens       ItensPedido[]
+}
+
+model ItensPedido {
+  id         Int     @id @default(autoincrement())
+  quantidade Int
+  preco      Decimal @db.Decimal(10, 2) // Preço no momento da compra
+  
+  // Relacionamento N-1 com Pedido
+  pedidoId   Int
+  pedido     Pedido  @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  
+  // Relacionamento N-1 com Produto
+  produtoId  Int
+  produto    Produto @relation(fields: [produtoId], references: [id])
+  
+  @@unique([pedidoId, produtoId]) // Um produto por pedido
 }
