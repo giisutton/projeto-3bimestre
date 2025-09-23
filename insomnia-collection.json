@@ -1,0 +1,193 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2025-09-22T12:00:00.000Z",
+  "__export_source": "insomnia.desktop.app:v2023.5.8",
+  "resources": [
+    {
+      "_id": "req_01",
+      "parentId": "fld_marketplace",
+      "_type": "request",
+      "name": "1. Criar Usuário",
+      "description": "",
+      "url": "http://localhost:3000/users",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"joao@marketplace.com\",\n  \"name\": \"João Silva\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ]
+    },
+    {
+      "_id": "req_02",
+      "parentId": "fld_marketplace",
+      "_type": "request",
+      "name": "2. Listar Usuários",
+      "description": "",
+      "url": "http://localhost:3000/users",
+      "method": "GET",
+      "body": {},
+      "headers": []
+    },
+    {
+      "_id": "req_03",
+      "parentId": "fld_marketplace",
+      "_type": "request",
+      "name": "3. Buscar Usuário por ID",
+      "description": "",
+      "url": "http://localhost:3000/users/1",
+      "method": "GET",
+      "body": {},
+      "headers": []
+    },
+    {
+      "_id": "req_04",
+      "parentId": "fld_marketplace",
+      "_type": "request",
+      "name": "4. Criar Loja",
+      "description": "",
+      "url": "http://localhost:3000/stores",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Eletrônicos do João\",\n  \"userId\": 1\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ]
+    },
+    {
+      "_id": "req_05",
+      "parentId": "fld_marketplace",
+      "_type": "request",
+      "name": "5. Listar Lojas",
+      "description": "",
+      "url": "http://localhost:3000/stores",
+      "method": "GET",
+      "body": {},
+      "headers": []
+    },
+    {
+      "_id": "req_06",
+      "parentId": "fld_marketplace",
+      "_type": "request",
+      "name": "6. Buscar Loja por ID (com dono e produtos)",
+      "description": "",
+      "url": "http://localhost:3000/stores/1",
+      "method": "GET",
+      "body": {},
+      "headers": []
+    },
+    {
+      "_id": "req_07",
+      "parentId": "fld_marketplace",
+      "_type": "request",
+      "name": "7. Atualizar Loja (PUT - OBRIGATÓRIO)",
+      "description": "",
+      "url": "http://localhost:3000/stores/1",
+      "method": "PUT",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Tech Store Premium\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ]
+    },
+    {
+      "_id": "req_08",
+      "parentId": "fld_marketplace",
+      "_type": "request",
+      "name": "8. Criar Produto",
+      "description": "",
+      "url": "http://localhost:3000/products",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"iPhone 15\",\n  \"price\": 4999.99,\n  \"storeId\": 1\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ]
+    },
+    {
+      "_id": "req_09",
+      "parentId": "fld_marketplace",
+      "_type": "request",
+      "name": "9. Listar Produtos (com loja e dono)",
+      "description": "",
+      "url": "http://localhost:3000/products",
+      "method": "GET",
+      "body": {},
+      "headers": []
+    },
+    {
+      "_id": "req_10",
+      "parentId": "fld_marketplace",
+      "_type": "request",
+      "name": "10. Atualizar Produto (PUT - OBRIGATÓRIO)",
+      "description": "",
+      "url": "http://localhost:3000/products/1",
+      "method": "PUT",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"iPhone 15 Pro Max\",\n  \"price\": 5999.99\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ]
+    },
+    {
+      "_id": "req_11",
+      "parentId": "fld_marketplace",
+      "_type": "request",
+      "name": "11. Deletar Produto (DELETE - OBRIGATÓRIO)",
+      "description": "",
+      "url": "http://localhost:3000/products/1",
+      "method": "DELETE",
+      "body": {},
+      "headers": []
+    },
+    {
+      "_id": "req_12",
+      "parentId": "fld_marketplace",
+      "_type": "request",
+      "name": "12. Status da API",
+      "description": "",
+      "url": "http://localhost:3000/status",
+      "method": "GET",
+      "body": {},
+      "headers": []
+    },
+    {
+      "_id": "fld_marketplace",
+      "parentId": "wrk_marketplace",
+      "_type": "request_group",
+      "name": "Marketplace API",
+      "description": "API Marketplace Enxuto - Projeto 3º Bimestre"
+    },
+    {
+      "_id": "wrk_marketplace",
+      "_type": "workspace",
+      "name": "Projeto 3º Bimestre",
+      "description": "API REST Marketplace com Node.js, Prisma e MySQL"
+    }
+  ]
+}

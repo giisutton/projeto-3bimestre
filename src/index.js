@@ -6,6 +6,15 @@ import prisma from "./db.js"; // Importar nossa conexão com o banco
 // Carregar variáveis de ambiente do arquivo .env
 dotenv.config();
 
+// Verificar se o Prisma foi importado corretamente
+if (!prisma) {
+  console.error("❌ ERRO CRÍTICO: Prisma Client não foi importado!");
+  process.exit(1);
+}
+
+console.log("🔧 Prisma Client importado:", typeof prisma);
+console.log("🔧 Métodos disponíveis:", Object.keys(prisma));
+
 // Criar aplicação Express
 const app = express();
 
@@ -13,308 +22,227 @@ const app = express();
 app.use(express.json());
 
 //Healthcheck
-app.get("/", (_req, res) => res.json({ ok: true, service: "API 3º Bimestre" }));
+app.get("/", (_req, res) => res.json({ ok: true, service: "API Marketplace Enxuto" }));
 
 //ROTA DE TESTE
 app.get("/status", (req, res) => {
-  res.json({ message: "API Online" });
+  res.json({ message: "API Marketplace Online" });
 });
 
-// ============ ROTAS CRUD PARA USUARIO ============
+// ============ ROTAS CRUD PARA USUÁRIOS ============
 
-//CREATE: POST /usuarios
-app.post("/usuarios", async (req, res) => {
+// POST /users - Criar usuário
+app.post('/users', async (req, res) => {
   try {
-    const { name, email, password } = req.body;
-    const novoUsuario = await prisma.usuario.create({
-      data: { name, email, password },
-      include: { loja: true } // Include para trazer dados relacionados
+    const { email, name } = req.body;
+    const user = await prisma.usuario.create({
+      data: { email, name },
+      include: { loja: true }
     });
-
-    res.status(201).json(novoUsuario);
-  } catch (error) {
-    if (error.code === "P2002") {
-      return res.status(409).json({ error: "E-mail já cadastrado" });
-    }
-
-    res.status(500).json({ error: "Erro ao criar usuário", details: error.message });
+    res.status(201).json(user);
+  } catch (e) { 
+    res.status(400).json({ error: e.message }); 
   }
 });
 
-//READ: GET /usuarios (listar todos)
-app.get("/usuarios", async (_req, res) => {
+// GET /users - Listar todos os usuários (com include da store)
+app.get('/users', async (req, res) => {
   try {
-    const usuarios = await prisma.usuario.findMany({
-      include: { loja: true }, // Include para trazer dados relacionados
-      orderBy: { id: "asc" }
+    const users = await prisma.usuario.findMany({
+      include: { loja: true }
     });
-    res.json(usuarios);
-  } catch (error) {
-    res.status(500).json({ error: "Erro ao listar usuários", details: error.message });
+    res.json(users);
+  } catch (e) { 
+    res.status(400).json({ error: e.message }); 
   }
 });
 
-//READ: GET /usuarios/:id (buscar por ID)
-app.get("/usuarios/:id", async (req, res) => {
+// GET /users/:id - Buscar usuário por ID (com include da store)
+app.get('/users/:id', async (req, res) => {
   try {
-    const { id } = req.params;
-    const usuario = await prisma.usuario.findUnique({
-      where: { id: parseInt(id) },
-      include: { loja: true } // Include para trazer dados relacionados
+    const user = await prisma.usuario.findUnique({
+      where: { id: Number(req.params.id) },
+      include: { loja: true }
     });
-
-    if (!usuario) {
-      return res.status(404).json({ error: "Usuário não encontrado" });
-    }
-
-    res.json(usuario);
-  } catch (error) {
-    res.status(500).json({ error: "Erro ao buscar usuário", details: error.message });
+    if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
+    res.json(user);
+  } catch (e) { 
+    res.status(400).json({ error: e.message }); 
   }
 });
 
-//UPDATE: PUT /usuarios/:id
-app.put("/usuarios/:id", async (req, res) => {
+// PUT /users/:id - Atualizar usuário
+app.put('/users/:id', async (req, res) => {
   try {
-    const { id } = req.params;
-    const { name, email, password } = req.body;
-    
-    const usuarioAtualizado = await prisma.usuario.update({
-      where: { id: parseInt(id) },
-      data: { name, email, password },
-      include: { loja: true } // Include para trazer dados relacionados
+    const { email, name } = req.body;
+    const user = await prisma.usuario.update({
+      where: { id: Number(req.params.id) },
+      data: { email, name },
+      include: { loja: true }
     });
-
-    res.json(usuarioAtualizado);
-  } catch (error) {
-    if (error.code === "P2025") {
-      return res.status(404).json({ error: "Usuário não encontrado" });
-    }
-    if (error.code === "P2002") {
-      return res.status(409).json({ error: "E-mail já cadastrado" });
-    }
-    res.status(500).json({ error: "Erro ao atualizar usuário", details: error.message });
+    res.json(user);
+  } catch (e) { 
+    res.status(400).json({ error: e.message }); 
   }
 });
 
-//DELETE: DELETE /usuarios/:id
-app.delete("/usuarios/:id", async (req, res) => {
+// DELETE /users/:id - Deletar usuário
+app.delete('/users/:id', async (req, res) => {
   try {
-    const { id } = req.params;
-    
     await prisma.usuario.delete({
-      where: { id: parseInt(id) }
+      where: { id: Number(req.params.id) }
     });
-
     res.status(204).send();
-  } catch (error) {
-    if (error.code === "P2025") {
-      return res.status(404).json({ error: "Usuário não encontrado" });
-    }
-    res.status(500).json({ error: "Erro ao deletar usuário", details: error.message });
+  } catch (e) { 
+    res.status(400).json({ error: e.message }); 
   }
 });
 
-// ============ ROTAS CRUD PARA LOJA ============
+// ============ ROTAS CRUD PARA STORES (LOJAS) ============
 
-//CREATE: POST /lojas
-app.post("/lojas", async (req, res) => {
+// POST /stores - Criar loja (relacionamento 1-1 com User)
+app.post('/stores', async (req, res) => {
   try {
-    const { nome, descricao, endereco, telefone, usuarioId } = req.body;
-    const novaLoja = await prisma.loja.create({
-      data: { nome, descricao, endereco, telefone, usuarioId },
-      include: { 
-        usuario: true, 
-        produtos: true 
-      } // Include para trazer dados relacionados
+    const { name, userId } = req.body;
+    const store = await prisma.loja.create({
+      data: { name, usuarioId: Number(userId) },
+      include: { usuario: true, produtos: true }
     });
-
-    res.status(201).json(novaLoja);
-  } catch (error) {
-    if (error.code === "P2002") {
-      return res.status(409).json({ error: "Este usuário já possui uma loja" });
-    }
-    if (error.code === "P2003") {
-      return res.status(400).json({ error: "Usuário não encontrado" });
-    }
-
-    res.status(500).json({ error: "Erro ao criar loja", details: error.message });
+    res.status(201).json(store);
+  } catch (e) { 
+    res.status(400).json({ error: e.message }); 
   }
 });
 
-//READ: GET /lojas (listar todas)
-app.get("/lojas", async (_req, res) => {
+// GET /stores - Listar todas as lojas (com include de user e products)
+app.get('/stores', async (req, res) => {
   try {
-    const lojas = await prisma.loja.findMany({
-      include: { 
-        usuario: true, 
-        produtos: true 
-      }, // Include para trazer dados relacionados
-      orderBy: { id: "asc" }
+    const stores = await prisma.loja.findMany({
+      include: { usuario: true, produtos: true }
     });
-    res.json(lojas);
-  } catch (error) {
-    res.status(500).json({ error: "Erro ao listar lojas", details: error.message });
+    res.json(stores);
+  } catch (e) { 
+    res.status(400).json({ error: e.message }); 
   }
 });
 
-//READ: GET /lojas/:id (buscar por ID)
-app.get("/lojas/:id", async (req, res) => {
+// GET /stores/:id - Buscar loja por ID (retorna loja + user (dono) + produtos)
+app.get('/stores/:id', async (req, res) => {
   try {
-    const { id } = req.params;
-    const loja = await prisma.loja.findUnique({
-      where: { id: parseInt(id) },
-      include: { 
-        usuario: true, 
-        produtos: true 
-      } // Include para trazer dados relacionados
+    const store = await prisma.loja.findUnique({
+      where: { id: Number(req.params.id) },
+      include: { usuario: true, produtos: true }
     });
-
-    if (!loja) {
-      return res.status(404).json({ error: "Loja não encontrada" });
-    }
-
-    res.json(loja);
-  } catch (error) {
-    res.status(500).json({ error: "Erro ao buscar loja", details: error.message });
+    if (!store) return res.status(404).json({ error: 'Loja não encontrada' });
+    res.json(store);
+  } catch (e) { 
+    res.status(400).json({ error: e.message }); 
   }
 });
 
-//UPDATE: PUT /lojas/:id
-app.put("/lojas/:id", async (req, res) => {
+// PUT /stores/:id - Atualizar loja (OBRIGATÓRIO)
+app.put('/stores/:id', async (req, res) => {
   try {
-    const { id } = req.params;
-    const { nome, descricao, endereco, telefone } = req.body;
-    
-    const lojaAtualizada = await prisma.loja.update({
-      where: { id: parseInt(id) },
-      data: { nome, descricao, endereco, telefone },
-      include: { 
-        usuario: true, 
-        produtos: true 
-      } // Include para trazer dados relacionados
+    const { name } = req.body;
+    const store = await prisma.loja.update({
+      where: { id: Number(req.params.id) },
+      data: { name },
+      include: { usuario: true, produtos: true }
     });
-
-    res.json(lojaAtualizada);
-  } catch (error) {
-    if (error.code === "P2025") {
-      return res.status(404).json({ error: "Loja não encontrada" });
-    }
-    res.status(500).json({ error: "Erro ao atualizar loja", details: error.message });
+    res.json(store);
+  } catch (e) { 
+    res.status(400).json({ error: e.message }); 
   }
 });
 
-//DELETE: DELETE /lojas/:id
-app.delete("/lojas/:id", async (req, res) => {
+// DELETE /stores/:id - Deletar loja (OBRIGATÓRIO)
+app.delete('/stores/:id', async (req, res) => {
   try {
-    const { id } = req.params;
-    
     await prisma.loja.delete({
-      where: { id: parseInt(id) }
+      where: { id: Number(req.params.id) }
     });
-
     res.status(204).send();
-  } catch (error) {
-    if (error.code === "P2025") {
-      return res.status(404).json({ error: "Loja não encontrada" });
-    }
-    res.status(500).json({ error: "Erro ao deletar loja", details: error.message });
+  } catch (e) { 
+    res.status(400).json({ error: e.message }); 
   }
 });
 
-// ============ ROTAS CRUD PARA PRODUTO ============
+// ============ ROTAS CRUD PARA PRODUCTS (PRODUTOS) ============
 
-//CREATE: POST /produtos
-app.post("/produtos", async (req, res) => {
+// POST /products - Criar produto (relacionamento N-1 com Store)
+app.post('/products', async (req, res) => {
   try {
-    const { nome, descricao, preco, categoria, estoque, lojaId } = req.body;
-    const novoProduto = await prisma.produto.create({
-      data: { nome, descricao, preco, categoria, estoque, lojaId },
-      include: { loja: true } // Include para trazer dados relacionados
+    const { name, price, storeId } = req.body;
+    const product = await prisma.produto.create({
+      data: { name, price: Number(price), lojaId: Number(storeId) },
+      include: { loja: { include: { usuario: true } } }
     });
-
-    res.status(201).json(novoProduto);
-  } catch (error) {
-    if (error.code === "P2003") {
-      return res.status(400).json({ error: "Loja não encontrada" });
-    }
-
-    res.status(500).json({ error: "Erro ao criar produto", details: error.message });
+    res.status(201).json(product);
+  } catch (e) { 
+    res.status(400).json({ error: e.message }); 
   }
 });
 
-//READ: GET /produtos (listar todos)
-app.get("/produtos", async (_req, res) => {
+// GET /products - Listar todos os produtos (inclui a loja e o dono da loja)
+app.get('/products', async (req, res) => {
   try {
-    const produtos = await prisma.produto.findMany({
-      include: { loja: true }, // Include para trazer dados relacionados
-      orderBy: { id: "asc" }
+    const products = await prisma.produto.findMany({
+      include: { loja: { include: { usuario: true } } }
     });
-    res.json(produtos);
-  } catch (error) {
-    res.status(500).json({ error: "Erro ao listar produtos", details: error.message });
+    res.json(products);
+  } catch (e) { 
+    res.status(400).json({ error: e.message }); 
   }
 });
 
-//READ: GET /produtos/:id (buscar por ID)
-app.get("/produtos/:id", async (req, res) => {
+// GET /products/:id - Buscar produto por ID (com include da store e user)
+app.get('/products/:id', async (req, res) => {
   try {
-    const { id } = req.params;
-    const produto = await prisma.produto.findUnique({
-      where: { id: parseInt(id) },
-      include: { loja: true } // Include para trazer dados relacionados
+    const product = await prisma.produto.findUnique({
+      where: { id: Number(req.params.id) },
+      include: { loja: { include: { usuario: true } } }
     });
-
-    if (!produto) {
-      return res.status(404).json({ error: "Produto não encontrado" });
-    }
-
-    res.json(produto);
-  } catch (error) {
-    res.status(500).json({ error: "Erro ao buscar produto", details: error.message });
+    if (!product) return res.status(404).json({ error: 'Produto não encontrado' });
+    res.json(product);
+  } catch (e) { 
+    res.status(400).json({ error: e.message }); 
   }
 });
 
-//UPDATE: PUT /produtos/:id
-app.put("/produtos/:id", async (req, res) => {
+// PUT /products/:id - Atualizar produto (OBRIGATÓRIO)
+app.put('/products/:id', async (req, res) => {
   try {
-    const { id } = req.params;
-    const { nome, descricao, preco, categoria, estoque } = req.body;
-    
-    const produtoAtualizado = await prisma.produto.update({
-      where: { id: parseInt(id) },
-      data: { nome, descricao, preco, categoria, estoque },
-      include: { loja: true } // Include para trazer dados relacionados
+    const { name, price } = req.body;
+    const product = await prisma.produto.update({
+      where: { id: Number(req.params.id) },
+      data: { name, price: Number(price) },
+      include: { loja: { include: { usuario: true } } }
     });
-
-    res.json(produtoAtualizado);
-  } catch (error) {
-    if (error.code === "P2025") {
-      return res.status(404).json({ error: "Produto não encontrado" });
-    }
-    res.status(500).json({ error: "Erro ao atualizar produto", details: error.message });
+    res.json(product);
+  } catch (e) { 
+    res.status(400).json({ error: e.message }); 
   }
 });
 
-//DELETE: DELETE /produtos/:id
-app.delete("/produtos/:id", async (req, res) => {
+// DELETE /products/:id - Deletar produto (OBRIGATÓRIO)
+app.delete('/products/:id', async (req, res) => {
   try {
-    const { id } = req.params;
-    
     await prisma.produto.delete({
-      where: { id: parseInt(id) }
+      where: { id: Number(req.params.id) }
     });
-
     res.status(204).send();
-  } catch (error) {
-    if (error.code === "P2025") {
-      return res.status(404).json({ error: "Produto não encontrado" });
-    }
-    res.status(500).json({ error: "Erro ao deletar produto", details: error.message });
+  } catch (e) { 
+    res.status(400).json({ error: e.message }); 
   }
 });
+
+// ============ IMPORTANTE: MÉTODOS OBRIGATÓRIOS ============
+// ✅ PUT (atualização) para Stores - IMPLEMENTADO
+// ✅ DELETE (remoção) para Stores - IMPLEMENTADO  
+// ✅ PUT (atualização) para Products - IMPLEMENTADO
+// ✅ DELETE (remoção) para Products - IMPLEMENTADO
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Servidor rodando em http://localhost:${PORT}`);
+  console.log(`🚀 Servidor Marketplace rodando em http://localhost:${PORT}`);
 });
