@@ -40,8 +40,8 @@ app.post('/users', async (req, res) => {
       include: { loja: true }
     });
     res.status(201).json(user);
-  } catch (e) { 
-    res.status(400).json({ error: e.message }); 
+  } catch (e) {
+    res.status(400).json({ error: e.message });
   }
 });
 
@@ -52,8 +52,8 @@ app.get('/users', async (req, res) => {
       include: { loja: true }
     });
     res.json(users);
-  } catch (e) { 
-    res.status(400).json({ error: e.message }); 
+  } catch (e) {
+    res.status(400).json({ error: e.message });
   }
 });
 
@@ -66,8 +66,8 @@ app.get('/users/:id', async (req, res) => {
     });
     if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
     res.json(user);
-  } catch (e) { 
-    res.status(400).json({ error: e.message }); 
+  } catch (e) {
+    res.status(400).json({ error: e.message });
   }
 });
 
@@ -81,8 +81,8 @@ app.put('/users/:id', async (req, res) => {
       include: { loja: true }
     });
     res.json(user);
-  } catch (e) { 
-    res.status(400).json({ error: e.message }); 
+  } catch (e) {
+    res.status(400).json({ error: e.message });
   }
 });
 
@@ -93,8 +93,8 @@ app.delete('/users/:id', async (req, res) => {
       where: { id: Number(req.params.id) }
     });
     res.status(204).send();
-  } catch (e) { 
-    res.status(400).json({ error: e.message }); 
+  } catch (e) {
+    res.status(400).json({ error: e.message });
   }
 });
 
@@ -104,13 +104,35 @@ app.delete('/users/:id', async (req, res) => {
 app.post('/stores', async (req, res) => {
   try {
     const { name, userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ error: 'userId é obrigatório' });
+    }
+
+    // Verificar se usuário existe e já tem loja
+    const usuario = await prisma.usuario.findUnique({
+      where: { id: Number(userId) },
+      include: { loja: true }
+    });
+
+    if (!usuario) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    if (usuario.loja) {
+      return res.status(400).json({
+        error: 'Este usuário já possui uma loja. Relacionamento 1-1 não permite múltiplas lojas.',
+        existingStore: usuario.loja
+      });
+    }
+
     const store = await prisma.loja.create({
       data: { name, usuarioId: Number(userId) },
       include: { usuario: true, produtos: true }
     });
     res.status(201).json(store);
-  } catch (e) { 
-    res.status(400).json({ error: e.message }); 
+  } catch (e) {
+    res.status(400).json({ error: e.message });
   }
 });
 
@@ -121,8 +143,8 @@ app.get('/stores', async (req, res) => {
       include: { usuario: true, produtos: true }
     });
     res.json(stores);
-  } catch (e) { 
-    res.status(400).json({ error: e.message }); 
+  } catch (e) {
+    res.status(400).json({ error: e.message });
   }
 });
 
@@ -135,8 +157,8 @@ app.get('/stores/:id', async (req, res) => {
     });
     if (!store) return res.status(404).json({ error: 'Loja não encontrada' });
     res.json(store);
-  } catch (e) { 
-    res.status(400).json({ error: e.message }); 
+  } catch (e) {
+    res.status(400).json({ error: e.message });
   }
 });
 
@@ -150,8 +172,8 @@ app.put('/stores/:id', async (req, res) => {
       include: { usuario: true, produtos: true }
     });
     res.json(store);
-  } catch (e) { 
-    res.status(400).json({ error: e.message }); 
+  } catch (e) {
+    res.status(400).json({ error: e.message });
   }
 });
 
@@ -162,8 +184,8 @@ app.delete('/stores/:id', async (req, res) => {
       where: { id: Number(req.params.id) }
     });
     res.status(204).send();
-  } catch (e) { 
-    res.status(400).json({ error: e.message }); 
+  } catch (e) {
+    res.status(400).json({ error: e.message });
   }
 });
 
@@ -178,8 +200,8 @@ app.post('/products', async (req, res) => {
       include: { loja: { include: { usuario: true } } }
     });
     res.status(201).json(product);
-  } catch (e) { 
-    res.status(400).json({ error: e.message }); 
+  } catch (e) {
+    res.status(400).json({ error: e.message });
   }
 });
 
@@ -190,8 +212,8 @@ app.get('/products', async (req, res) => {
       include: { loja: { include: { usuario: true } } }
     });
     res.json(products);
-  } catch (e) { 
-    res.status(400).json({ error: e.message }); 
+  } catch (e) {
+    res.status(400).json({ error: e.message });
   }
 });
 
@@ -204,8 +226,8 @@ app.get('/products/:id', async (req, res) => {
     });
     if (!product) return res.status(404).json({ error: 'Produto não encontrado' });
     res.json(product);
-  } catch (e) { 
-    res.status(400).json({ error: e.message }); 
+  } catch (e) {
+    res.status(400).json({ error: e.message });
   }
 });
 
@@ -219,8 +241,8 @@ app.put('/products/:id', async (req, res) => {
       include: { loja: { include: { usuario: true } } }
     });
     res.json(product);
-  } catch (e) { 
-    res.status(400).json({ error: e.message }); 
+  } catch (e) {
+    res.status(400).json({ error: e.message });
   }
 });
 
@@ -231,8 +253,8 @@ app.delete('/products/:id', async (req, res) => {
       where: { id: Number(req.params.id) }
     });
     res.status(204).send();
-  } catch (e) { 
-    res.status(400).json({ error: e.message }); 
+  } catch (e) {
+    res.status(400).json({ error: e.message });
   }
 });
 
@@ -243,6 +265,13 @@ app.delete('/products/:id', async (req, res) => {
 // ✅ DELETE (remoção) para Products - IMPLEMENTADO
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`🚀 Servidor Marketplace rodando em http://localhost:${PORT}`);
+  console.log(`🔍 Servidor ouvindo na porta ${PORT}`);
 });
+
+server.on('error', (err) => {
+  console.error('❌ Erro no servidor:', err);
+});
+
+console.log('📋 Configurações do servidor:', { PORT, NODE_ENV: process.env.NODE_ENV });
