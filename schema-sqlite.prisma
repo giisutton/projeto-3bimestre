@@ -1,39 +1,39 @@
-generator client {
-  provider = "prisma-client-js"
-}
+# Configuração SQLite para Testes Imediatos
 
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
 }
 
 model Usuario {
   id        Int      @id @default(autoincrement())
   email     String   @unique
   name      String?
+  loja      Loja?    // 1-1: um usuário tem uma loja
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  loja      Loja?
 }
 
 model Loja {
   id        Int       @id @default(autoincrement())
   name      String
   usuarioId Int       @unique
+  usuario   Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  produtos  Produto[] // 1-N: uma loja tem vários produtos
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
-  usuario   Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-  produtos  Produto[]
 }
 
 model Produto {
   id        Int      @id @default(autoincrement())
   name      String
-  price     Decimal  @db.Decimal(10, 2)
+  price     Float    // SQLite usa Float ao invés de Decimal
   lojaId    Int
+  loja      Loja     @relation(fields: [lojaId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  loja      Loja     @relation(fields: [lojaId], references: [id], onDelete: Cascade)
-
-  @@index([lojaId], map: "Produto_lojaId_fkey")
 }
